@@ -3,6 +3,7 @@
 		"@types/es6-promise": "^3.3.0",
 		"axios-https-proxy-fix": "^0.17.1",
 		"discord.js": "^14.6.0",
+		"mongoose": "^6.7.2",
 		"npm": "^8.19.3"
 	},
 	"name": "ts-node-base",
