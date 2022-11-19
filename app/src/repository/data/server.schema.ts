@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+import { IServerSchema } from '../../types/discord.interface';
 
-const serverSchema = new mongoose.Schema({
+const ServerSchema = new mongoose.Schema<IServerSchema>({
 	guild: {
 		name: {
 			type: String,
@@ -40,4 +41,4 @@ const serverSchema = new mongoose.Schema({
 	],
 });
 
-export default mongoose.model('Server', serverSchema);
+export default mongoose.model<IServerSchema>('Server', ServerSchema);
