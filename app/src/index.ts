@@ -20,7 +20,9 @@ client.on('interactionCreate', (interaction: Interaction) => {});
 
 client.on('messageCreate', (message: Message) => {
 	if (!message.author.bot) {
-		message.channel.send('Sends message once');
+		if(message.attachments.size >= 1) {
+			console.log('Succesfully recognised success post')
+		}
 	}
 });
 
