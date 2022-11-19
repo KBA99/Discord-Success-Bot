@@ -18,13 +18,18 @@ client.on('ready', () => {
 
 client.on('interactionCreate', (interaction: Interaction) => {});
 
-client.on('messageCreate', (message: Message) => {
+client.on('messageCreate', async (message: Message) => {
+	await addReactionsToMessageIfAttachment(message);
+});
+const addReactionsToMessageIfAttachment = async (message: Message) => {
+	// Add a check for if content type includes image
 	if (!message.author.bot) {
-		if(message.attachments.size >= 1) {
-			console.log('Succesfully recognised success post')
+		if (message.attachments.size >= 1) {
+			message.react('✅');
+			message.react('❌');
 		}
 	}
-});
+};
 
 (async function Initialize() {
 	client.login(discordConfig.token);
