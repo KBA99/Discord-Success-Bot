@@ -24,7 +24,7 @@ const ServerSchema = new mongoose.Schema<IServerSchema>({
 				immutable: true,
 			},
 		},
-		botAdded: {
+		dateAdded: {
 			type: Number,
 			required: true,
 			default: () => new Date().getTime(),
