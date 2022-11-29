@@ -20,14 +20,14 @@ const ServerSchema = new mongoose.Schema<IServerSchema>({
 			},
 			discordTag: {
 				type: String,
-				required: true,
+				required: false,
 				immutable: true,
 			},
 		},
 		dateAdded: {
-			type: Number,
+			type: String,
 			required: true,
-			default: () => new Date().getTime(),
+			default: () => new Date(),
 			immutable: false,
 		},
 	},
