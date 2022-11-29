@@ -18,7 +18,20 @@ client.on('ready', () => {
 	console.log(`🤖 Bot is online and logged in as ${client.user?.tag}!`);
 });
 
-client.on('interactionCreate', (interaction: Interaction) => {});
+client.on('interactionCreate', async (interaction: Interaction) => {
+	if (!interaction.isCommand()) return;
+	const command = commands.get(interaction.commandName);
+
+	try {
+		command?.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({
+			content: 'There was an error while executing this command!',
+			ephemeral: true,
+		});
+	}
+});
 
 client.on('messageCreate', async (message: Message) => {
 	await addReactionsToMessageIfAttachment(message);
