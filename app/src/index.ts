@@ -6,12 +6,14 @@ import {
 	Client,
 	Routes,
 	REST,
+	Guild,
 } from 'discord.js';
 import path from 'node:path';
 import fs from 'node:fs';
 import { discordConfig } from '~/config';
 import { connectToDatabase } from './repository/database.connect';
 import { DiscordCommandConfig } from './types/discord.interface';
+import { addNewServerToDatabase } from './repository/services/server.service';
 
 export const client = new Client({
 	intents: [
@@ -78,6 +80,10 @@ client.on('messageReactionAdd', (event, user) => {
 		console.log(event, user);
 		event.message.reactions.removeAll();
 	}
+});
+
+client.on('guildCreate', async (guild: Guild) => {
+	await addNewServerToDatabase(guild);
 });
 
 const addReactionsToMessageIfAttachment = async (message: Message) => {
