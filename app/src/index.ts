@@ -1,8 +1,17 @@
-import { Interaction, GatewayIntentBits, Message } from 'discord.js';
-import { Client } from 'discord.js';
+import {
+	Interaction,
+	GatewayIntentBits,
+	Message,
+	Collection,
+	Client,
+	Routes,
+	REST,
+} from 'discord.js';
+import path from 'node:path';
+import fs from 'node:fs';
 import { discordConfig } from '~/config';
 import { connectToDatabase } from './repository/database.connect';
-import { timer } from './utils/helper';
+import { DiscordCommandConfig } from './types/discord.interface';
 
 export const client = new Client({
 	intents: [
@@ -13,6 +22,33 @@ export const client = new Client({
 		GatewayIntentBits.GuildMessageReactions,
 	],
 });
+
+/* ----------------------------- Commands Setup ----------------------------- */
+const commands = new Collection<string, DiscordCommandConfig>();
+
+const commandFiles = fs
+	.readdirSync(path.join(__dirname, 'commands'))
+	.filter((file) => file.endsWith('.ts'));
+
+for (const file of commandFiles) {
+	const command = require(path.join(__dirname, 'commands', file)).default;
+	const commandName = command.data.name;
+	commands.set(commandName, command);
+}
+
+const commandConfig = commands.map((command) => command.data);
+const rest = new REST({ version: '10' }).setToken(discordConfig.token);
+
+rest.put(Routes.applicationGuildCommands(discordConfig.clientId, discordConfig.guildId), {
+	body: commandConfig,
+})
+	.then(() =>
+		console.log(
+			'\x1b[35m%s\x1b[0m',
+			'[Initialize][Discord] Successfully registered application commands.'
+		)
+	)
+	.catch(() => console.log(process.env));
 
 client.on('ready', () => {
 	console.log(`🤖 Bot is online and logged in as ${client.user?.tag}!`);
