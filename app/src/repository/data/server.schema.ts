@@ -30,6 +30,11 @@ const ServerSchema = new mongoose.Schema<IServerSchema>({
 			default: () => new Date(),
 			immutable: false,
 		},
+		successChannel: {
+			type: String,
+			required: false,
+			immutable: false,
+		}
 	},
 	users: [
 		{
