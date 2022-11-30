@@ -79,6 +79,11 @@ export const findServerById = async (guild: Guild) => {
 	return await ServerSchema.findOne({ 'guild.id': guild.id });
 };
 
+export const getDiscordTagAndDiscriminator = (guild: Guild, id: string) => {
+	const user = guild.client.users.cache.get(id);
+	return user?.username + '#' + user?.discriminator;
+};
+
 export const increaseSuccessSubmissionByOne = async (guild: Guild, discordId: string) => {
 	const { user, server } = await findUserSuccessProfile(guild, discordId);
 	if (user != null || user != undefined) {
