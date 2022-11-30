@@ -75,10 +75,17 @@ client.on('messageCreate', async (message: Message) => {
 	await addReactionsToMessageIfAttachment(message);
 });
 
-client.on('messageReactionAdd', (event, user) => {
+client.on('messageReactionAdd', async (event, user) => {
 	if (!user.bot) {
-		console.log(event, user);
-		event.message.reactions.removeAll();
+		await event.message.reactions.removeAll();
+
+		if (event.emoji.name == '✅') {
+			await event.message.react('🥇');
+		}
+
+		if (event.emoji.name == '❌') {
+			await event.message.react('❎');
+		}
 	}
 });
 
