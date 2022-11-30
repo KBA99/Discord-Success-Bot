@@ -22,6 +22,7 @@ export interface IServerSchema extends mongoose.Document {
 			discordTag: string;
 		};
 		dateAdded: string;
+		successChannel: string;
 	};
 	users: DiscordUser[];
 }
