@@ -13,7 +13,12 @@ import fs from 'node:fs';
 import { discordConfig } from '~/config';
 import { connectToDatabase } from './repository/database.connect';
 import { DiscordCommandConfig } from './types/discord.interface';
-import { addNewServerToDatabase } from './repository/services/server.service';
+import {
+	acceptSuccess,
+	addNewServerToDatabase,
+	denySuccess,
+	increaseSuccessSubmissionByOne,
+} from './repository/services/server.service';
 
 export const client = new Client({
 	intents: [
@@ -80,10 +85,12 @@ client.on('messageReactionAdd', async (event, user) => {
 		await event.message.reactions.removeAll();
 
 		if (event.emoji.name == '✅') {
+			await acceptSuccess(event.message.guild!, event.message.author?.id!);
 			await event.message.react('🥇');
 		}
 
 		if (event.emoji.name == '❌') {
+			await denySuccess(event.message.guild!, event.message.author?.id!);
 			await event.message.react('❎');
 		}
 	}
@@ -97,6 +104,7 @@ const addReactionsToMessageIfAttachment = async (message: Message) => {
 	// Add a check for if content type includes image
 	if (!message.author.bot) {
 		if (message.attachments.size >= 1) {
+			await increaseSuccessSubmissionByOne(message.guild!, message.author.id);
 			message.react('✅');
 			message.react('❌');
 		}
