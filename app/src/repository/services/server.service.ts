@@ -35,8 +35,17 @@ export const createUserSuccessProfile = async (
 	});
 	return server?.save();
 };
+
 export const findServerById = async (guild: Guild) => {
 	return await ServerSchema.findOne({ 'guild.id': guild.id });
+};
+
+export const increaseSuccessSubmissionByOne = async (guild: Guild, discordId: string) => {
+	const { user, server } = await findUserSuccessProfile(guild, discordId);
+	if (user != null || user != undefined) {
+		user.submitted++;
+	}
+	return server?.save();
 };
 
 export const setSuccessChannel = async (interaction: CommandInteraction) => {
