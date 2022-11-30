@@ -62,6 +62,32 @@ export const findUserSuccessProfile = async (guild: Guild, discordId: string) =>
 	return { user, server };
 };
 
+export const findTopSuccessProfiles = async (guild: Guild, number: number = 15) => {
+	const server = await findServerById(guild);
+	throwErrorIfGuildIsNull(guild);
+	const users = server?.users;
+	// find the top 15 in the array by approved count
+
+	users?.sort(function (a, b) {
+		return a.approved + b.approved;
+	});
+
+	const embed = new EmbedBuilder()
+		.setTitle(`Success leaderboard`)
+		.setColor(`#00209e`)
+		.setTimestamp(new Date());
+
+	for (let i = 0; i < number; i++) {
+		const user = users?.[i];
+		embed.addFields({
+			name: getDiscordTagAndDiscriminator(guild, user!.discordId),
+			value: `${user!.approved}`,
+		});
+	}
+
+	return embed;
+};
+
 export const createUserSuccessProfile = async (
 	server: (IServerSchema & { _id: Types.ObjectId }) | null | undefined,
 	discordId: string
@@ -86,7 +112,7 @@ export const getDiscordTagAndDiscriminator = (guild: Guild, id: string) => {
 
 export const getDiscordUserById = (guild: Guild, id: string) => {
 	return guild.client.users.cache.get(id);
-}
+};
 
 export const increaseSuccessSubmissionByOne = async (guild: Guild, discordId: string) => {
 	const { user, server } = await findUserSuccessProfile(guild, discordId);
