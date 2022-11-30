@@ -22,6 +22,19 @@ export const addNewServerToDatabase = async (guild: Guild) => {
 	}
 };
 
+
+export const createUserSuccessProfile = async (
+	server: (IServerSchema & { _id: Types.ObjectId }) | null | undefined,
+	discordId: string
+) => {
+	server?.users.push({
+		discordId: discordId,
+		approved: 0,
+		denied: 0,
+		submitted: 0,
+	});
+	return server?.save();
+};
 export const findServerById = async (guild: Guild) => {
 	return await ServerSchema.findOne({ 'guild.id': guild.id });
 };
