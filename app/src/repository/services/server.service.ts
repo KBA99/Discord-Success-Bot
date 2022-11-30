@@ -1,4 +1,4 @@
-import { CommandInteraction, Guild, User } from 'discord.js';
+import { CommandInteraction, EmbedBuilder, Guild, User } from 'discord.js';
 import { Types } from 'mongoose';
 import { IServerSchema } from '../../types/discord.interface';
 import ServerSchema from '../data/server.schema';
@@ -83,6 +83,10 @@ export const getDiscordTagAndDiscriminator = (guild: Guild, id: string) => {
 	const user = guild.client.users.cache.get(id);
 	return user?.username + '#' + user?.discriminator;
 };
+
+export const getDiscordUserById = (guild: Guild, id: string) => {
+	return guild.client.users.cache.get(id);
+}
 
 export const increaseSuccessSubmissionByOne = async (guild: Guild, discordId: string) => {
 	const { user, server } = await findUserSuccessProfile(guild, discordId);
