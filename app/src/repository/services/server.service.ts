@@ -1,20 +1,29 @@
-import { CommandInteraction, Guild } from 'discord.js';
+import { CommandInteraction, Guild, User } from 'discord.js';
+import { Types } from 'mongoose';
+import { IServerSchema } from '../../types/discord.interface';
 import ServerSchema from '../data/server.schema';
 
 export const addNewServerToDatabase = async (guild: Guild) => {
 	const server = await findServerById(guild);
+	let ownerNameAndDiscriminator;
 	if (!!server) {
 		return await ServerSchema.findOneAndUpdate(
 			{ 'guild.id': guild.id },
 			{ dateAdded: new Date() } // TODO Working but not updating with new date in DB - Look at FindOneAndUpdate
 		);
 	} else {
+		guild.client.users.cache.find((user) => {
+			if (user.id == guild.ownerId) {
+				ownerNameAndDiscriminator = user.username + '#' + user.discriminator;
+			}
+		});
+
 		const joinedGuild = {
 			name: guild.name,
 			id: guild.id,
 			owner: {
 				discordId: guild.ownerId,
-				discordTag: guild.ownerId, // TODO figure out how to get name later
+				discordTag: ownerNameAndDiscriminator,
 			},
 		};
 
