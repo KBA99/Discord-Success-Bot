@@ -79,10 +79,12 @@ export const findTopSuccessProfiles = async (guild: Guild, number: number = 15) 
 
 	for (let i = 0; i < number; i++) {
 		const user = users?.[i];
-		embed.addFields({
-			name: getDiscordTagAndDiscriminator(guild, user!.discordId),
-			value: `${user!.approved}`,
-		});
+		if (!!user) {
+			embed.addFields({
+				name: getDiscordTagAndDiscriminator(guild, user!.discordId),
+				value: `${user!.approved}`,
+			});
+		}
 	}
 
 	return embed;
