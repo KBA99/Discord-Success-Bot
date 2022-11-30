@@ -1,4 +1,4 @@
-import { Guild } from 'discord.js';
+import { CommandInteraction, Guild } from 'discord.js';
 import ServerSchema from '../data/server.schema';
 
 export const addNewServerToDatabase = async (guild: Guild) => {
@@ -24,4 +24,20 @@ export const addNewServerToDatabase = async (guild: Guild) => {
 
 export const findServerById = async (guild: Guild) => {
 	return await ServerSchema.findOne({ 'guild.id': guild.id });
+};
+
+export const setSuccessChannel = async (interaction: CommandInteraction) => {
+	throwErrorIfGuildIsNull(interaction.guild);
+	const server = await findServerById(interaction.guild!);
+
+	if (server != null) {
+		server.guild.successChannel = interaction.channelId;
+		await server.save();
+	}
+};
+
+const throwErrorIfGuildIsNull = (guild: Guild | null) => {
+	if (guild == null) {
+		throw new Error('This guild is null');
+	}
 };
