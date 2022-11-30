@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 export interface DiscordUser {
 	discordId: string;
-	approaved: number;
+	approved: number;
 	denied: number;
 	submitted: number;
 }
