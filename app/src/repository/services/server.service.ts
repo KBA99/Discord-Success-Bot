@@ -22,6 +22,20 @@ export const addNewServerToDatabase = async (guild: Guild) => {
 	}
 };
 
+export const findUserSuccessProfile = async (guild: Guild, discordId: string) => {
+	let user;
+	let server;
+	server = await findServerById(guild);
+	throwErrorIfGuildIsNull(guild);
+
+	user = server?.users.find((user) => (user.discordId = discordId));
+
+	if (user == null) {
+		server = await createUserSuccessProfile(server, discordId);
+		user = server?.users.find((user) => (user.discordId = discordId));
+	}
+	return { user, server };
+};
 
 export const createUserSuccessProfile = async (
 	server: (IServerSchema & { _id: Types.ObjectId }) | null | undefined,
