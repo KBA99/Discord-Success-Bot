@@ -22,6 +22,22 @@ export const addNewServerToDatabase = async (guild: Guild) => {
 	}
 };
 
+export const acceptSuccess = async (guild: Guild, discordId: string) => {
+	const { user, server } = await findUserSuccessProfile(guild, discordId);
+	if (user != null || user != undefined) {
+		user.approved++;
+	}
+	return server?.save();
+};
+
+export const denySuccess = async (guild: Guild, discordId: string) => {
+	const { user, server } = await findUserSuccessProfile(guild, discordId);
+	if (user != null || user != undefined) {
+		user.denied++;
+	}
+	return server?.save();
+};
+
 export const findUserSuccessProfile = async (guild: Guild, discordId: string) => {
 	let user;
 	let server;
