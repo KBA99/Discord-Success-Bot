@@ -53,11 +53,11 @@ export const findUserSuccessProfile = async (guild: Guild, discordId: string) =>
 	server = await findServerById(guild);
 	throwErrorIfGuildIsNull(guild);
 
-	user = server?.users.find((user) => (user.discordId = discordId));
+	user = server?.users.find((user) => (user.discordId == discordId));
 
 	if (user == null) {
 		server = await createUserSuccessProfile(server, discordId);
-		user = server?.users.find((user) => (user.discordId = discordId));
+		user = server?.users.find((user) => (user.discordId == discordId));
 	}
 	return { user, server };
 };
