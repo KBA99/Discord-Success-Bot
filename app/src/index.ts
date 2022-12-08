@@ -7,6 +7,7 @@ import {
 	Routes,
 	REST,
 	Guild,
+	Partials,
 } from 'discord.js';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -21,6 +22,7 @@ import {
 } from './repository/services/server.service';
 
 export const client = new Client({
+	partials: [Partials.Channel, Partials.User, Partials.GuildMember],
 	intents: [
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMembers,
