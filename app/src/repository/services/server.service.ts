@@ -53,11 +53,11 @@ export const findUserSuccessProfile = async (guild: Guild, discordId: string) =>
 	server = await findServerById(guild);
 	throwErrorIfGuildIsNull(guild);
 
-	user = server?.users.find((user) => (user.discordId == discordId));
+	user = server?.users.find((user) => user.discordId == discordId);
 
 	if (user == null) {
 		server = await createUserSuccessProfile(server, discordId);
-		user = server?.users.find((user) => (user.discordId == discordId));
+		user = server?.users.find((user) => user.discordId == discordId);
 	}
 	return { user, server };
 };
@@ -65,15 +65,12 @@ export const findUserSuccessProfile = async (guild: Guild, discordId: string) =>
 export const findTopSuccessProfiles = async (guild: Guild, number: number = 15) => {
 	const server = await findServerById(guild);
 	throwErrorIfGuildIsNull(guild);
-	const users = server?.users;
+	let users = server?.users;
 	// find the top 15 in the array by approved count
 
-	users?.sort(function (a, b) {
-		return a.approved + b.approved;
-	});
-
 	const embed = new EmbedBuilder()
-		.setTitle(`Success leaderboard`)
+		.setTitle(`${guild.name} Success Leaderboard`)
+		.setThumbnail(guild.iconURL())
 		.setColor(`#00209e`)
 		.setTimestamp(new Date());
 
@@ -81,8 +78,8 @@ export const findTopSuccessProfiles = async (guild: Guild, number: number = 15) 
 		const user = users?.[i];
 		if (!!user) {
 			embed.addFields({
-				name: getDiscordTagAndDiscriminator(guild, user!.discordId),
-				value: `${user!.approved}`,
+				name: `#${i + 1}`,
+				value: `<@${user!.discordId}> | ${user!.approved}`,
 			});
 		}
 	}
@@ -109,7 +106,7 @@ export const findServerById = async (guild: Guild) => {
 
 export const getDiscordTagAndDiscriminator = (guild: Guild, id: string) => {
 	const user = guild.client.users.cache.get(id);
-	return user?.username + '#' + user?.discriminator;
+	return user?.username + '#' + user?.discriminator + ' | ' + `<@${user?.id}>`;
 };
 
 export const getDiscordUserById = (guild: Guild, id: string) => {
