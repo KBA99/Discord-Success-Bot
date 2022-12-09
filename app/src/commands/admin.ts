@@ -1,18 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import {
-	CacheType,
-	CommandInteraction,
-	CommandInteractionOptionResolver,
-	Role,
-	TextChannel,
-} from 'discord.js';
-import {
-	findServerById,
-	addNewServerToDatabase,
-	setSuccessChannel,
-	modifyModerationRole,
-    showModeratorRoles,
-} from '../repository/services/server.service';
+import { CommandInteraction, CommandInteractionOptionResolver, Role } from 'discord.js';
+import { modifyModerationRole, registerSuccessChannel, showModeratorRoles } from '../repository/services/server.service';
 import { AdminActivationAction, AdminCommandOption } from '../types/AdminActivationOptions';
 import { DiscordCommandConfig, ModerateOptions } from '../types/discord.interface';
 
@@ -63,9 +51,14 @@ const commandDefinition = new SlashCommandBuilder()
 						// .setRequired(true)
 					)
 			)
+			.addSubcommand((showModerators) =>
+				showModerators
+					.setName(ModerateOptions.show_moderators)
+					.setDescription('Set the roles that can moderate success channel')
+			)
 			.addSubcommand((autoAccept) =>
 				autoAccept
-					.setName('accept_all')
+					.setName(ModerateOptions.accept_all)
 					.setDescription('Toggle this command to accept all posts')
 					.addBooleanOption((option) =>
 						option.setName('boolean').setDescription('Sets autoaccept on or off')
@@ -100,14 +93,11 @@ const executeCommand = async (interaction: CommandInteraction) => {
 				}
 			}
 
-			const successChannel = (<unknown>options.getChannel('channel')) as TextChannel;
-			if (successChannel != null) {
-				await setSuccessChannel(interaction, successChannel!);
-				interaction.reply(`${successChannel} has now been set as the success channel`);
+			if (options.getSubcommand() == ModerateOptions.show_moderators) {
+				const emebed = await showModeratorRoles(interaction);
+				await interaction.reply({ embeds: [emebed!] });
 			}
-			break;
 
-		case AdminCommandOption.moderate:
 			break;
 
 		default:

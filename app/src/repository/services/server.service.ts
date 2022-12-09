@@ -1,5 +1,6 @@
-import { CommandInteraction, EmbedBuilder, Guild, TextChannel } from 'discord.js';
+import { CacheType, CommandInteraction, CommandInteractionOptionResolver, EmbedBuilder, Guild, Role, TextChannel } from 'discord.js';
 import { Types } from 'mongoose';
+import { AdminActivationAction } from '../../types/AdminActivationOptions';
 import { IServerSchema } from '../../types/discord.interface';
 import ServerSchema from '../data/server.schema';
 
@@ -158,22 +159,46 @@ export const modifyModerationRole = async (
 			case AdminActivationAction.Clear:
 				server.guild.moderatorRoles = [];
 				break;
-			case AdminActivationAction.Show:
-				const embed = new EmbedBuilder()
-					.setTitle(`${interaction.guild!.name} Success Bot Moderators`)
-					.setThumbnail(interaction.guild!.iconURL())
-					.setColor(`#00209e`)
-					.setTimestamp(new Date());
-
-				server.guild.moderatorRoles.forEach((role) => {
-					embed.addFields({ name: 'Role', value: `<@&${role}>` });
-				});
-				return embed;
 
 			default:
 				throw new Error('Error modifying moderation role');
 		}
 		server.save();
+	}
+};
+
+export async function registerSuccessChannel(
+	interaction: CommandInteraction<CacheType>,
+	options: CommandInteractionOptionResolver<CacheType>
+) {
+	const server = await findServerById(interaction.guild!);
+
+	if (server == null) {
+		await addNewServerToDatabase(interaction.guild!);
+	}
+
+	const successChannel = (<unknown>options.getChannel('channel')) as TextChannel;
+	if (successChannel != null) {
+		await setSuccessChannel(interaction, successChannel!);
+		return successChannel;
+	}
+}
+
+export const showModeratorRoles = async (interaction: CommandInteraction) => {
+	throwErrorIfGuildIsNull(interaction.guild);
+	let server = await findServerById(interaction.guild!);
+
+	if (server != null) {
+		const embed = new EmbedBuilder()
+			.setTitle(`${interaction.guild!.name} Success Bot Moderators`)
+			.setThumbnail(interaction.guild!.iconURL())
+			.setColor(`#00209e`)
+			.setTimestamp(new Date());
+
+		server.guild.moderatorRoles.forEach((role) => {
+			embed.addFields({ name: 'Role', value: `<@&${role}>` });
+		});
+		return embed;
 	}
 };
 
