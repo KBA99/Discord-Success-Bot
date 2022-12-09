@@ -30,11 +30,17 @@ const ServerSchema = new mongoose.Schema<IServerSchema>({
 			default: () => new Date(),
 			immutable: false,
 		},
+		moderatorRoles: [
+			{
+				type: String,
+			},
+		],
+		acceptAll: { type: Boolean, default: false },
 		successChannel: {
 			type: String,
 			required: false,
 			immutable: false,
-		}
+		},
 	},
 	users: [
 		{
