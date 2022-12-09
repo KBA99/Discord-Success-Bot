@@ -1,4 +1,12 @@
-import { CacheType, CommandInteraction, CommandInteractionOptionResolver, EmbedBuilder, Guild, Role, TextChannel } from 'discord.js';
+import {
+	CacheType,
+	CommandInteraction,
+	CommandInteractionOptionResolver,
+	EmbedBuilder,
+	Guild,
+	Role,
+	TextChannel,
+} from 'discord.js';
 import { Types } from 'mongoose';
 import { AdminActivationAction } from '../../types/AdminActivationOptions';
 import { IServerSchema } from '../../types/discord.interface';
@@ -135,6 +143,18 @@ export const setSuccessChannel = async (
 	}
 };
 
+export const setAutomaticAccept = async (
+	interaction: CommandInteraction,
+	acceptAll: boolean = false
+) => {
+	throwErrorIfGuildIsNull(interaction.guild);
+	const server = await findServerById(interaction.guild!);
+
+	if (server != null) {
+		server.guild.acceptAll = acceptAll;
+		server.save();
+	}
+};
 
 export const modifyModerationRole = async (
 	interaction: CommandInteraction,

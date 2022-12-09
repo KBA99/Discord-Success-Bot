@@ -23,6 +23,14 @@ export interface IServerSchema extends mongoose.Document {
 		};
 		dateAdded: string;
 		successChannel: string;
+		acceptAll: Boolean;
+		moderatorRoles: string[];
 	};
 	users: DiscordUser[];
+}
+
+export enum ModerateOptions {
+	accept_all = 'accept_all',
+	moderator_role = 'moderator_role',
+	show_moderators = 'show_moderators',
 }

@@ -1,6 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction, CommandInteractionOptionResolver, Role } from 'discord.js';
-import { modifyModerationRole, registerSuccessChannel, showModeratorRoles } from '../repository/services/server.service';
+import {
+	modifyModerationRole,
+	registerSuccessChannel,
+	setAutomaticAccept,
+	showModeratorRoles,
+} from '../repository/services/server.service';
 import { AdminActivationAction, AdminCommandOption } from '../types/AdminActivationOptions';
 import { DiscordCommandConfig, ModerateOptions } from '../types/discord.interface';
 
@@ -96,6 +101,18 @@ const executeCommand = async (interaction: CommandInteraction) => {
 			if (options.getSubcommand() == ModerateOptions.show_moderators) {
 				const emebed = await showModeratorRoles(interaction);
 				await interaction.reply({ embeds: [emebed!] });
+			}
+
+			if (options.getSubcommand() == ModerateOptions.accept_all) {
+				const boolean = options.getBoolean('boolean') || false;
+				await setAutomaticAccept(interaction, boolean);
+				if (boolean) {
+					interaction.reply('All success posts will now be automatically accepted');
+				} else {
+					interaction.reply(
+						'All success posts will now require a member of the moderation team to be accepted'
+					);
+				}
 			}
 
 			break;
