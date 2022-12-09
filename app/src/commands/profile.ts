@@ -12,6 +12,7 @@ const executeCommand = async (interaction: CommandInteraction) => {
 	interaction.reply({
 		embeds: [
 			new EmbedBuilder()
+                .setThumbnail(interaction.guild!.iconURL())
 				.setTitle(`Success Profile`)
 				.setColor(`#00209e`)
 				.addFields(
