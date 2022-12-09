@@ -1,12 +1,20 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, CommandInteractionOptionResolver, TextChannel } from 'discord.js';
+import {
+	CacheType,
+	CommandInteraction,
+	CommandInteractionOptionResolver,
+	Role,
+	TextChannel,
+} from 'discord.js';
 import {
 	findServerById,
 	addNewServerToDatabase,
 	setSuccessChannel,
+	modifyModerationRole,
+    showModeratorRoles,
 } from '../repository/services/server.service';
 import { AdminActivationAction, AdminCommandOption } from '../types/AdminActivationOptions';
-import { DiscordCommandConfig } from '../types/discord.interface';
+import { DiscordCommandConfig, ModerateOptions } from '../types/discord.interface';
 
 const commandDefinition = new SlashCommandBuilder()
 	.setName('admin')
@@ -14,7 +22,7 @@ const commandDefinition = new SlashCommandBuilder()
 	.addSubcommandGroup((register) =>
 		register
 			.setName('register')
-			.setDescription('Registers the success channel on a sever')
+			.setDescription('Registers the success channel on a server')
 			.addSubcommand((subcommand) =>
 				subcommand
 					.setName('channel')
@@ -33,7 +41,7 @@ const commandDefinition = new SlashCommandBuilder()
 			.setDescription('Moderation Group')
 			.addSubcommand((moderationRole) =>
 				moderationRole
-					.setName('moderator_role')
+					.setName(ModerateOptions.moderator_role)
 					.addRoleOption((option) => option.setName('role').setDescription('User Role'))
 					.setDescription('Set the roles that can moderate success channel')
 					.addStringOption(
@@ -46,6 +54,10 @@ const commandDefinition = new SlashCommandBuilder()
 								{
 									name: AdminActivationAction.Remove,
 									value: AdminActivationAction.Remove,
+								},
+								{
+									name: AdminActivationAction.Clear,
+									value: AdminActivationAction.Clear,
 								}
 							)
 						// .setRequired(true)
@@ -66,10 +78,26 @@ const executeCommand = async (interaction: CommandInteraction) => {
 
 	switch (options.getSubcommandGroup()) {
 		case AdminCommandOption.register:
-			const server = await findServerById(interaction.guild!);
+			const successChannel = await registerSuccessChannel(interaction, options);
+			await interaction.reply(`${successChannel} has now been set as the success channel`);
+			break;
 
-			if (server == null) {
-				await addNewServerToDatabase(interaction.guild!);
+		case AdminCommandOption.moderate:
+			if (options.getSubcommand() == ModerateOptions.moderator_role) {
+				const role = options.getRole('role') as Role;
+				if (options.getString('action') == AdminActivationAction.Add) {
+					await modifyModerationRole(interaction, role, AdminActivationAction.Add);
+					await interaction.channel?.send(`${role} has been added as a moderator role.`);
+					await interaction.reply(`<@&${role.id}> has been added as a moderator role.`);
+				}
+				if (options.getString('action') == AdminActivationAction.Remove) {
+					await modifyModerationRole(interaction, role, AdminActivationAction.Remove);
+					await interaction.reply(`${role} has been removed as a moderator role.`);
+				}
+				if (options.getString('action') == AdminActivationAction.Clear) {
+					await modifyModerationRole(interaction, role, AdminActivationAction.Clear);
+					await interaction.reply(`All moderator roles have been cleared`);
+				}
 			}
 
 			const successChannel = (<unknown>options.getChannel('channel')) as TextChannel;
