@@ -1,4 +1,4 @@
-import { CommandInteraction, EmbedBuilder, Guild, User } from 'discord.js';
+import { CommandInteraction, EmbedBuilder, Guild, TextChannel } from 'discord.js';
 import { Types } from 'mongoose';
 import { IServerSchema } from '../../types/discord.interface';
 import ServerSchema from '../data/server.schema';
@@ -121,12 +121,15 @@ export const increaseSuccessSubmissionByOne = async (guild: Guild, discordId: st
 	return server?.save();
 };
 
-export const setSuccessChannel = async (interaction: CommandInteraction) => {
+export const setSuccessChannel = async (
+	interaction: CommandInteraction,
+	successChannel: TextChannel
+) => {
 	throwErrorIfGuildIsNull(interaction.guild);
 	const server = await findServerById(interaction.guild!);
 
 	if (server != null) {
-		server.guild.successChannel = interaction.channelId;
+		server.guild.successChannel = successChannel.id;
 		await server.save();
 	}
 };
