@@ -19,7 +19,7 @@ const executeCommand = async (interaction: CommandInteraction) => {
 					{ name: 'Approved', value: `${user?.approved}`, inline: true },
 					{ name: 'Denied', value: `${user?.denied}`, inline: true },
 					{ name: 'Submitted', value: `${user?.submitted}`, inline: true },
-                    { name: 'Activated by', value: `<@${interaction.user.id}>`, inline: false }
+					{ name: 'Activated by', value: `<@${interaction.user.id}>`, inline: false }
 				)
 				.setTimestamp(new Date()),
 		],
