@@ -18,6 +18,7 @@ import {
 	acceptSuccess,
 	addNewServerToDatabase,
 	denySuccess,
+	findServerById,
 	increaseSuccessSubmissionByOne,
 } from './repository/services/server.service';
 
@@ -79,21 +80,41 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 });
 
 client.on('messageCreate', async (message: Message) => {
-	await addReactionsToMessageIfAttachment(message);
+	const server = await findServerById(message.guild!);
+	if (server?.guild.acceptAll == true) {
+		if (!message.author.bot) {
+			if (message.attachments.size >= 1) {
+				await increaseSuccessSubmissionByOne(message.guild!, message.author.id);
+				await acceptSuccess(message.guild!, message.author?.id!);
+				await message.react('🥇');
+			}
+		}
+	} else {
+		await addReactionsToMessageIfAttachment(message);
+	}
 });
 
 client.on('messageReactionAdd', async (event, user) => {
 	if (!user.bot) {
-		await event.message.reactions.removeAll();
+		const server = await findServerById(event.message.guild!);
 
-		if (event.emoji.name == '✅') {
-			await acceptSuccess(event.message.guild!, event.message.author?.id!);
-			await event.message.react('🥇');
-		}
+		const userRoles = event.message.member?.roles.cache;
 
-		if (event.emoji.name == '❌') {
-			await denySuccess(event.message.guild!, event.message.author?.id!);
-			await event.message.react('❎');
+		const overlap = userRoles!.filter((role) => server?.guild.moderatorRoles.includes(role.id));
+
+		if (!!overlap.size) {
+			// User has a moderator role
+			await event.message.reactions.removeAll();
+
+			if (event.emoji.name == '✅') {
+				await acceptSuccess(event.message.guild!, event.message.author?.id!);
+				await event.message.react('🥇');
+			}
+
+			if (event.emoji.name == '❌') {
+				await denySuccess(event.message.guild!, event.message.author?.id!);
+				await event.message.react('❎');
+			}
 		}
 	}
 });
