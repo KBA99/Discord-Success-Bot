@@ -21,8 +21,9 @@ export interface AdminActivationOptions {
 }
 
 export enum AdminCommandOption {
-	register = 'register',
+	database = 'database',
 	moderate = 'moderate',
+	register = 'register',
 }
 
 export interface ModerationArgs {
