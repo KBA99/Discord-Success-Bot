@@ -77,7 +77,7 @@ const executeCommand = async (interaction: CommandInteraction) => {
 	switch (options.getSubcommandGroup()) {
 		case AdminCommandOption.register:
 			const successChannel = await registerSuccessChannel(interaction, options);
-			await interaction.reply(`${successChannel} has now been set as the success channel`);
+			await interaction.reply(`<#${successChannel?.id}> has now been set as the success channel`);
 			break;
 
 		case AdminCommandOption.moderate:
