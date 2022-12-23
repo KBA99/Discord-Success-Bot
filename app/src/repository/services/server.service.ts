@@ -222,8 +222,15 @@ export const showModeratorRoles = async (interaction: CommandInteraction) => {
 	}
 };
 
-const throwErrorIfGuildIsNull = (guild: Guild | null) => {
-	if (guild == null) {
-		throw new Error('This guild is null');
-	}
+
+export const clearDB = () => {
+	const db = mongoose.connection;
+	(async () => {
+		try {
+			await db.dropDatabase();
+			console.log('\x1b[31m%s\x1b[0m', '[DATABASE][DELETE] Database dropped');
+		} catch (error) {
+			console.error(error);
+		}
+	})();
 };
