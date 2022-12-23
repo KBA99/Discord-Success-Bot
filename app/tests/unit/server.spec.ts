@@ -10,7 +10,7 @@ const clearDatabse = async () => {
 
 const setup = async () => {
 	// Given we are connected to our test database
-	dbConnection = await connectToDatabase(TEST_DB_URL);
+	await connectToDatabase(TEST_DB_URL);
 };
 
 const teardown = async () => {
