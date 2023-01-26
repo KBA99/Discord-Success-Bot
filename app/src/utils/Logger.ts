@@ -22,11 +22,11 @@ export function logToFile(filePath: string) {
 export class Logger {
 	@logToFile('log.txt')
 	static async info(message?: any) {
-		console.log('\x1b[36m%s\x1b[0m', message, '\x1b[0m');
+		console.log('\x1b[36m%s\x1b[0m', "[INFO] " + message, '\x1b[0m');
 	}
 
 	@logToFile('log.txt')
 	static async warn(message: any) {
-		console.log('\x1b[31m%s\x1b[0m', message, '\x1b[0m');
+		console.log('\x1b[31m%s\x1b[0m', "[WARN] " + message, '\x1b[0m');
 	}
 }
