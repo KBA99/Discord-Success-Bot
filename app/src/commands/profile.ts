@@ -8,7 +8,7 @@ const commandDefinition = new SlashCommandBuilder()
 	.setDescription('Use this command to open your user success profile');
 
 const executeCommand = async (interaction: CommandInteraction) => {
-	const { user } = await findUserSuccessProfile(interaction.guild!, interaction.user.id);
+	const user = await findUserSuccessProfile(interaction.guild!, interaction.user.id);
 	interaction.reply({
 		embeds: [
 			new EmbedBuilder()
