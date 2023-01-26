@@ -18,7 +18,8 @@ import {
 	acceptSuccess,
 	addNewServerToDatabase,
 	denySuccess,
-	findServerById,
+	findServerByGuild,
+	increaseSuccessSubmissionAndAcceptSuccess,
 	increaseSuccessSubmissionByOne,
 } from './repository/services/server.service';
 
@@ -80,13 +81,11 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 });
 
 client.on('messageCreate', async (message: Message) => {
-	const server = await findServerById(message.guild!);
+	const server = await findServerByGuild(message.guild!);
 	if (server?.guild.acceptAll == true) {
 		if (!message.author.bot) {
 			if (message.attachments.size >= 1) {
-				await increaseSuccessSubmissionByOne(message.guild!, message.author.id);
-				await acceptSuccess(message.guild!, message.author?.id!);
-				await message.react('🥇');
+				await increaseSuccessSubmissionAndAcceptSuccess(message);
 			}
 		}
 	} else {
@@ -96,7 +95,7 @@ client.on('messageCreate', async (message: Message) => {
 
 client.on('messageReactionAdd', async (event, user) => {
 	if (!user.bot) {
-		const server = await findServerById(event.message.guild!);
+		const server = await findServerByGuild(event.message.guild!);
 
 		const userRoles = event.message.member?.roles.cache;
 
