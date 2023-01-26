@@ -4,76 +4,112 @@ import {
 	CommandInteractionOptionResolver,
 	EmbedBuilder,
 	Guild,
+	Message,
 	Role,
 	TextChannel,
 } from 'discord.js';
-import { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import { AdminActivationAction } from '../../types/AdminActivationOptions';
-import { IServerSchema } from '../../types/discord.interface';
+import { DiscordUser } from '../../types/discord.interface';
+import { Logger } from '../../utils/Logger';
 import ServerSchema from '../data/server.schema';
 
-export const addNewServerToDatabase = async (guild: Guild) => {
-	const server = await findServerById(guild);
-	let ownerNameAndDiscriminator;
+export const addNewServerToDatabase = async (guild: Guild): Promise<void> => {
+	const server = await findServerByGuild(guild);
+
 	if (!!server) {
-		return await ServerSchema.findOneAndUpdate(
-			{ 'guild.id': guild.id },
-			{ dateAdded: new Date() } // TODO Working but not updating with new date in DB - Look at FindOneAndUpdate
-		);
+		server.guild.dateAdded = new Date().toString();
+		await server.save();
 	} else {
+		let ownerNameAndDiscriminator;
 		guild.client.users.cache.find((user) => {
 			if (user.id == guild.ownerId) {
 				ownerNameAndDiscriminator = user.username + '#' + user.discriminator;
 			}
 		});
 
-		const joinedGuild = {
-			name: guild.name,
-			id: guild.id,
-			owner: {
-				discordId: guild.ownerId,
-				discordTag: ownerNameAndDiscriminator,
+		await ServerSchema.create({
+			guild: {
+				name: guild.name,
+				id: guild.id,
+				owner: {
+					discordId: guild.ownerId,
+					discordTag: ownerNameAndDiscriminator,
+				},
 			},
-		};
-
-		return await ServerSchema.create({ guild: joinedGuild });
+		});
+		Logger.info(`[Database] New server: ${guild.name} added to database`);
 	}
 };
 
 export const acceptSuccess = async (guild: Guild, discordId: string) => {
-	const { user, server } = await findUserSuccessProfile(guild, discordId);
-	if (user != null || user != undefined) {
-		user.approved++;
-	}
-	return server?.save();
+	const server = await findServerByGuild(guild);
+	throwErrorIfNull(guild);
+
+	const user = await findUserSuccessProfile(guild, discordId);
+	throwErrorIfNull(user);
+
+	server!.users.find((user) => {
+		user.discordId == discordId;
+	})!.approved++;
+
+	server!.save();
 };
 
 export const denySuccess = async (guild: Guild, discordId: string) => {
-	const { user, server } = await findUserSuccessProfile(guild, discordId);
-	if (user != null || user != undefined) {
-		user.denied++;
-	}
-	return server?.save();
+	const server = await findServerByGuild(guild);
+	throwErrorIfNull(server);
+
+	const user = await findUserSuccessProfile(guild, discordId);
+	throwErrorIfNull(user);
+
+	server!.users.find((user) => {
+		user.discordId == discordId;
+	})!.denied++;
+
+	server!.save();
 };
 
-export const findUserSuccessProfile = async (guild: Guild, discordId: string) => {
-	let user;
-	let server;
-	server = await findServerById(guild);
-	throwErrorIfGuildIsNull(guild);
+// export const findUserSuccessProfile = async (guild: Guild, discordId: string) => {
+// 	const server = await findServerByGuild(guild);
+// 	throwErrorIfNull(server);
 
-	user = server?.users.find((user) => user.discordId == discordId);
+// 	const user = server!.users.find((user) => user.discordId == discordId);
 
-	if (user == null) {
-		server = await createUserSuccessProfile(server, discordId);
-		user = server?.users.find((user) => user.discordId == discordId);
+// 	if (user == null) {
+// 		return await createUserSuccessProfile(guild, discordId);
+// 	}
+
+// 	return user;
+// };
+
+export const findUserSuccessProfile = async (
+	guild: Guild,
+	discordId: string
+): Promise<DiscordUser | undefined> => {
+	// const server = await findServerByGuild(guild);
+	// throwErrorIfNull(server);
+
+	// const user = server?.users.find((user) => user.discordId == discordId);
+
+	// if (user == null) {
+	// 	return await createUserSuccessProfile(guild, discordId);
+	// }
+
+	// return user;
+
+	const user = await ServerSchema.findOne({ 'users.discordId': discordId }, 'users.$');
+
+	if (user?.users[0] == null) {
+		return await createUserSuccessProfile(guild, discordId);
 	}
-	return { user, server };
+
+	return user?.users[0];
 };
 
 export const findTopSuccessProfiles = async (guild: Guild, number: number = 15) => {
-	const server = await findServerById(guild);
-	throwErrorIfGuildIsNull(guild);
+	const server = await findServerByGuild(guild);
+	throwErrorIfNull(guild);
 	let users = server?.users;
 	// find the top 15 in the array by approved count
 
@@ -96,21 +132,30 @@ export const findTopSuccessProfiles = async (guild: Guild, number: number = 15) 
 	return embed;
 };
 
-export const createUserSuccessProfile = async (
-	server: (IServerSchema & { _id: Types.ObjectId }) | null | undefined,
-	discordId: string
-) => {
-	server?.users.push({
+const createUserSuccessProfile = async (guild: Guild, discordId: string): Promise<DiscordUser> => {
+	const server = await findServerByGuild(guild);
+	throwErrorIfNull(server);
+
+	const user = {
 		discordId: discordId,
 		approved: 0,
 		denied: 0,
 		submitted: 0,
-	});
-	return server?.save();
+	};
+	server?.users.push(user);
+	await server?.save();
+	return user;
 };
 
-export const findServerById = async (guild: Guild) => {
-	return await ServerSchema.findOne({ 'guild.id': guild.id });
+export const findServerByGuild = async (guild: Guild) => {
+	let server = await ServerSchema.findOne({ 'guild.id': guild.id });
+
+	while (server == null) {
+		await addNewServerToDatabase(guild);
+		server = await ServerSchema.findOne({ 'guild.id': guild.id });
+	}
+
+	return server;
 };
 
 export const getDiscordTagAndDiscriminator = (guild: Guild, id: string) => {
@@ -123,19 +168,26 @@ export const getDiscordUserById = (guild: Guild, id: string) => {
 };
 
 export const increaseSuccessSubmissionByOne = async (guild: Guild, discordId: string) => {
-	const { user, server } = await findUserSuccessProfile(guild, discordId);
-	if (user != null || user != undefined) {
-		user.submitted++;
-	}
-	return server?.save();
+	const user = await findUserSuccessProfile(guild, discordId);
+	throwErrorIfNull(user);
+	user.submitted++;
+
+	const server = await findServerByGuild(guild);
+	throwErrorIfNull(server);
+
+	server!.users.find((user) => {
+		user.discordId == discordId;
+	})!.approved++;
+
+	await server!.save();
 };
 
 export const setSuccessChannel = async (
 	interaction: CommandInteraction,
 	successChannel: TextChannel
 ) => {
-	throwErrorIfGuildIsNull(interaction.guild);
-	const server = await findServerById(interaction.guild!);
+	throwErrorIfNull(interaction.guild);
+	const server = await findServerByGuild(interaction.guild!);
 
 	if (server != null) {
 		server.guild.successChannel = successChannel.id;
@@ -147,13 +199,11 @@ export const setAutomaticAccept = async (
 	interaction: CommandInteraction,
 	acceptAll: boolean = false
 ) => {
-	throwErrorIfGuildIsNull(interaction.guild);
-	const server = await findServerById(interaction.guild!);
+	const server = await findServerByGuild(interaction.guild!);
+	throwErrorIfNull(server);
 
-	if (server != null) {
-		server.guild.acceptAll = acceptAll;
-		server.save();
-	}
+	server!.guild.acceptAll = acceptAll;
+	await server!.save();
 };
 
 export const modifyModerationRole = async (
@@ -161,8 +211,8 @@ export const modifyModerationRole = async (
 	role: Role,
 	action: AdminActivationAction
 ) => {
-	throwErrorIfGuildIsNull(interaction.guild);
-	let server = await findServerById(interaction.guild!);
+	throwErrorIfNull(interaction.guild);
+	let server = await findServerByGuild(interaction.guild!);
 
 	if (server != null) {
 		switch (action) {
@@ -183,30 +233,33 @@ export const modifyModerationRole = async (
 			default:
 				throw new Error('Error modifying moderation role');
 		}
-		server.save();
+		await server.save();
 	}
 };
 
 export async function registerSuccessChannel(
 	interaction: CommandInteraction<CacheType>,
 	options: CommandInteractionOptionResolver<CacheType>
-) {
-	const server = await findServerById(interaction.guild!);
+): Promise<TextChannel> {
+	let server = await findServerByGuild(interaction.guild!);
+	let successChannel: TextChannel | undefined;
 
 	if (server == null) {
 		await addNewServerToDatabase(interaction.guild!);
+		server = await findServerByGuild(interaction.guild!);
 	}
 
-	const successChannel = (<unknown>options.getChannel('channel')) as TextChannel;
-	if (successChannel != null) {
-		await setSuccessChannel(interaction, successChannel!);
-		return successChannel;
-	}
+	successChannel = <TextChannel>options.getChannel('channel');
+	throwErrorIfNull(successChannel);
+
+	await setSuccessChannel(interaction, successChannel!);
+
+	return successChannel;
 }
 
 export const showModeratorRoles = async (interaction: CommandInteraction) => {
-	throwErrorIfGuildIsNull(interaction.guild);
-	let server = await findServerById(interaction.guild!);
+	throwErrorIfNull(interaction.guild);
+	let server = await findServerByGuild(interaction.guild!);
 
 	if (server != null) {
 		const embed = new EmbedBuilder()
@@ -222,13 +275,24 @@ export const showModeratorRoles = async (interaction: CommandInteraction) => {
 	}
 };
 
+const throwErrorIfNull = <T>(object: T) => {
+	if (object === null || object === undefined) {
+		throw new Error(`${object} is null or undefined.`);
+	}
+};
+
+export async function increaseSuccessSubmissionAndAcceptSuccess(message: Message<boolean>) {
+	await increaseSuccessSubmissionByOne(message.guild!, message.author.id);
+	await acceptSuccess(message.guild!, message.author?.id!);
+	await message.react('🥇');
+}
 
 export const clearDB = () => {
 	const db = mongoose.connection;
 	(async () => {
 		try {
 			await db.dropDatabase();
-			console.log('\x1b[31m%s\x1b[0m', '[DATABASE][DELETE] Database dropped');
+			Logger.warn('[DATABASE][DELETE] Database dropped');
 		} catch (error) {
 			console.error(error);
 		}
