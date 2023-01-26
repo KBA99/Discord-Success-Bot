@@ -1,6 +1,12 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, CommandInteractionOptionResolver, Role } from 'discord.js';
 import {
+	CommandInteraction,
+	CommandInteractionOptionResolver,
+	Role,
+	TextChannel,
+} from 'discord.js';
+import {
+	increaseSuccessSubmissionAndAcceptSuccess,
 	modifyModerationRole,
 	registerSuccessChannel,
 	setAutomaticAccept,
@@ -26,6 +32,16 @@ const commandDefinition = new SlashCommandBuilder()
 							.setDescription('Channel to set success channel as')
 							.setRequired(true)
 					)
+			)
+	)
+	.addSubcommandGroup((database) =>
+		database
+			.setName('database')
+			.setDescription('Manipulates Database - DANGEROUS!')
+			.addSubcommand((backdate) =>
+				backdate
+					.setName('backdate')
+					.setDescription('Backdates the previous success on a channel')
 			)
 	)
 	.addSubcommandGroup((moderate) =>
@@ -114,8 +130,29 @@ const executeCommand = async (interaction: CommandInteraction) => {
 					);
 				}
 			}
-
 			break;
+
+		case AdminCommandOption.database:
+			if (options.getSubcommand() == 'backdate') {
+				const channel = interaction.channel as TextChannel;
+
+				// Fetch the messages
+				const messages = await channel!.messages.fetch({ limit: 10 }); // Fetches up to 100 messages
+
+				let counter = 0;
+				messages.forEach(async (message) => {
+					if (!message.author.bot) {
+						console.log(++counter);
+
+						if (message.attachments.size >= 1) {
+							console.log(message.author.username);
+							increaseSuccessSubmissionAndAcceptSuccess(message);
+						}
+					}
+				});
+
+				interaction.channel?.send('Finished backdating');
+			}
 
 		default:
 			break;
